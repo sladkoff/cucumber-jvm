@@ -76,11 +76,6 @@ final class TestCase implements io.cucumber.plugin.event.TestCase {
     }
 
     @Override
-    public String getScenarioDesignation() {
-        return fileColonLine(getLine()) + " # " + getName();
-    }
-
-    @Override
     public URI getUri() {
         return pickle.getUri();
     }

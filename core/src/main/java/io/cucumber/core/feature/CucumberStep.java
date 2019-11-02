@@ -26,7 +26,7 @@ public final class CucumberStep implements io.cucumber.plugin.event.CucumberStep
     private String extractKeyWord(GherkinDocument document) {
         return document.getFeature().getChildren().stream()
             .flatMap(scenarioDefinition -> scenarioDefinition.getSteps().stream())
-            .filter(step -> step.getLocation().getLine() == getStepLine())
+            .filter(step -> step.getLocation().getLine() == getLine())
             .findFirst()
             .map(Step::getKeyword)
             .orElseThrow(() ->  new IllegalStateException("GherkinDocument did not contain PickleStep"));
@@ -71,7 +71,7 @@ public final class CucumberStep implements io.cucumber.plugin.event.CucumberStep
     }
 
     @Override
-    public int getStepLine() {
+    public int getLine() {
         int last = step.getLocations().size() - 1;
         return step.getLocations().get(last).getLine();
     }

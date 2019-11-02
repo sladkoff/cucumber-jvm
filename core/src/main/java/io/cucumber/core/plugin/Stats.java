@@ -1,16 +1,17 @@
 package io.cucumber.core.plugin;
 
+import io.cucumber.plugin.ColorAware;
+import io.cucumber.plugin.ConcurrentEventListener;
+import io.cucumber.plugin.StrictAware;
 import io.cucumber.plugin.event.EventPublisher;
 import io.cucumber.plugin.event.PickleStepTestStep;
 import io.cucumber.plugin.event.Result;
 import io.cucumber.plugin.event.Status;
+import io.cucumber.plugin.event.TestCase;
 import io.cucumber.plugin.event.TestCaseFinished;
 import io.cucumber.plugin.event.TestRunFinished;
 import io.cucumber.plugin.event.TestRunStarted;
 import io.cucumber.plugin.event.TestStepFinished;
-import io.cucumber.plugin.ColorAware;
-import io.cucumber.plugin.ConcurrentEventListener;
-import io.cucumber.plugin.StrictAware;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;
@@ -27,17 +28,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 class Stats implements ConcurrentEventListener, ColorAware, StrictAware {
     private static final long ONE_SECOND = SECONDS.toNanos(1);
     private static final long ONE_MINUTE = 60 * ONE_SECOND;
+    private final List<String> failedScenarios = new ArrayList<>();
+    private final List<String> pendingScenarios = new ArrayList<>();
+    private final List<String> undefinedScenarios = new ArrayList<>();
+    private final List<Throwable> errors = new ArrayList<>();
     private SubCounts scenarioSubCounts = new SubCounts();
     private SubCounts stepSubCounts = new SubCounts();
     private Instant startTime = Instant.EPOCH;
     private Duration totalDuration = Duration.ZERO;
     private Formats formats = new AnsiFormats();
     private Locale locale;
-    private final List<String> failedScenarios = new ArrayList<>();
     private List<String> ambiguousScenarios = new ArrayList<>();
-    private final List<String> pendingScenarios = new ArrayList<>();
-    private final List<String> undefinedScenarios = new ArrayList<>();
-    private final List<Throwable> errors = new ArrayList<>();
     private boolean strict;
 
     Stats() {
@@ -236,7 +237,11 @@ class Stats implements ConcurrentEventListener, ColorAware, StrictAware {
     }
 
     private void addScenario(TestCaseFinished event) {
-        addScenario(event.getResult().getStatus(), event.getTestCase().getScenarioDesignation());
+        TestCase testCase = event.getTestCase();
+        String scenarioDesignation = testCase.getUri().getSchemeSpecificPart()
+            + ":" + testCase.getLine()
+            + " # " + testCase.getName();
+        addScenario(event.getResult().getStatus(), scenarioDesignation);
     }
 
 

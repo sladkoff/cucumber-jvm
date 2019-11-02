@@ -34,5 +34,5 @@ public interface CucumberStep {
      *
      * @return step line number
      */
-    int getStepLine();
+    int getLine();
 }

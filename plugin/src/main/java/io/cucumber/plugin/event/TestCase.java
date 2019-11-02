@@ -17,8 +17,6 @@ public interface TestCase {
 
     String getName();
 
-    String getScenarioDesignation();
-
     List<String> getTags();
 
     List<TestStep> getTestSteps();
