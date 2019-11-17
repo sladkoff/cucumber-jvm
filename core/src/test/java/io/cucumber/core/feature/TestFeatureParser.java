@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 public class TestFeatureParser {
     public static CucumberFeature parse(final String source) {
@@ -21,6 +22,11 @@ public class TestFeatureParser {
             @Override
             public URI getUri() {
                 return uri;
+            }
+
+            @Override
+            public Path getPath() {
+                return null;
             }
 
             @Override

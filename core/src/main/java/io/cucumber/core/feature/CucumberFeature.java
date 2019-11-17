@@ -1,24 +1,25 @@
 package io.cucumber.core.feature;
 
 import gherkin.ast.Feature;
-import gherkin.ast.Feature;
 import gherkin.ast.GherkinDocument;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Optional;
 
 public final class CucumberFeature {
     private final URI uri;
+    private final Path path;
     private final List<CucumberPickle> pickles;
     private final GherkinDocument gherkinDocument;
     private final String gherkinSource;
 
-    CucumberFeature(GherkinDocument gherkinDocument, URI uri, String gherkinSource, List<CucumberPickle> pickles) {
+    CucumberFeature(GherkinDocument gherkinDocument, URI uri, Path path, String gherkinSource, List<CucumberPickle> pickles) {
         this.gherkinDocument = gherkinDocument;
         this.uri = uri;
+        this.path = path;
         this.gherkinSource = gherkinSource;
         this.pickles = pickles;
     }
@@ -37,6 +38,10 @@ public final class CucumberFeature {
 
     public URI getUri() {
         return uri;
+    }
+
+    public Path getPath() {
+        return path;
     }
 
     public String getSource() {

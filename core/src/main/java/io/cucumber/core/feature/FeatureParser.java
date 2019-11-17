@@ -35,7 +35,7 @@ public class FeatureParser {
             GherkinDocument gherkinDocument = parser.parse(source, matcher);
             GherkinDialectProvider dialectProvider = new GherkinDialectProvider();
             List<CucumberPickle> pickles = compilePickles(gherkinDocument, dialectProvider, resource);
-            return new CucumberFeature(gherkinDocument, uri, source, pickles);
+            return new CucumberFeature(gherkinDocument, uri, resource.getPath(), source, pickles);
         } catch (ParserException e) {
             throw new CucumberException("Failed to parse resource at: " + uri.toString(), e);
         }

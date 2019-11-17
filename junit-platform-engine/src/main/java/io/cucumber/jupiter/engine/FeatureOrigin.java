@@ -1,12 +1,12 @@
 package io.cucumber.jupiter.engine;
 
 import gherkin.ast.Examples;
+import gherkin.ast.Feature;
 import gherkin.ast.Location;
 import gherkin.ast.Node;
 import gherkin.ast.ScenarioOutline;
-import gherkin.ast.TableRow;
+import gherkin.ast.TableCell;
 import io.cucumber.core.feature.CucumberFeature;
-import io.cucumber.core.feature.CucumberPickle;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
@@ -16,7 +16,11 @@ import org.junit.platform.engine.support.descriptor.UriSource;
 
 import java.net.URI;
 
-import static io.cucumber.core.resource.ClasspathSupport.CLASSPATH_SCHEME_PREFIX;
+import static java.util.Arrays.asList;
+import static org.junit.platform.engine.support.descriptor.ClasspathResourceSource.CLASSPATH_SCHEME;
+import static org.junit.platform.engine.support.descriptor.ClasspathResourceSource.from;
+import static org.junit.platform.engine.support.descriptor.CompositeTestSource.from;
+import static org.junit.platform.engine.support.descriptor.FileSource.from;
 
 abstract class FeatureOrigin {
 
@@ -30,23 +34,37 @@ abstract class FeatureOrigin {
         return FilePosition.from(location.getLine(), location.getColumn());
     }
 
-    static FeatureOrigin fromUri(URI uri) {
-        if (ClasspathResourceSource.CLASSPATH_SCHEME.equals(uri.getScheme())) {
-            if (!uri.getSchemeSpecificPart().startsWith("/")) {
-                // ClasspathResourceSource.from expects all resources to start with /
-                uri = URI.create(CLASSPATH_SCHEME_PREFIX + "/" + uri.getSchemeSpecificPart());
+    // TODO: IDEA clicks through to location of parent node
+    // TODO: FileSource is in target directory
+    static FeatureOrigin create(CucumberFeature feature) {
+        Feature gherkinFeature = feature.getGherkinFeature();
+        Location location = gherkinFeature.getLocation();
+
+        FeatureOrigin featureOrigin = create(feature.getUri(), location);
+        FeatureOrigin pathOrigin = create(feature.getPath().toUri(), location);
+
+        return new CompositeFeatureOrigin(featureOrigin, pathOrigin);
+    }
+
+    private static FeatureOrigin create(URI uri, Location location) {
+        FilePosition filePosition = FilePosition.from(location.getLine(), location.getColumn());
+
+        // ClasspathResourceSource.from expects all resources to start with /
+        if (CLASSPATH_SCHEME.equals(uri.getScheme())) {
+            String classPathResource = uri.getSchemeSpecificPart();
+            if (!classPathResource.startsWith("/")) {
+                classPathResource = "/" + classPathResource;
             }
-            ClasspathResourceSource source = ClasspathResourceSource.from(uri);
-            return new ClasspathFeatureOrigin(source);
+            return new ClasspathFeatureOrigin(from(classPathResource, filePosition));
         }
 
         UriSource source = UriSource.from(uri);
         if (source instanceof FileSource) {
-            return new FileFeatureOrigin((FileSource) source);
+            FileSource fileSource = (FileSource) source;
+            return new FileFeatureOrigin(from(fileSource.getFile(), filePosition));
         }
 
         return new UriFeatureOrigin(source);
-
     }
 
     static boolean isFeatureSegment(UniqueId.Segment segment) {
@@ -71,8 +89,9 @@ abstract class FeatureOrigin {
         return parent.append(EXAMPLES_SEGMENT_TYPE, String.valueOf(examples.getLocation().getLine()));
     }
 
-    UniqueId exampleSegment(UniqueId parent, TableRow tableRow) {
-        return parent.append(EXAMPLE_SEGMENT_TYPE, String.valueOf(tableRow.getLocation().getLine()));
+    UniqueId exampleSegment(UniqueId parent, TableCell firstCell) {
+        Location location = firstCell.getLocation();
+        return parent.append(EXAMPLE_SEGMENT_TYPE, String.valueOf(location.getLine()));
     }
 
     private static class FileFeatureOrigin extends FeatureOrigin {
@@ -90,7 +109,7 @@ abstract class FeatureOrigin {
 
         @Override
         TestSource nodeSource(Node node) {
-            return FileSource.from(source.getFile(), createFilePosition(node.getLocation()));
+            return from(source.getFile(), createFilePosition(node.getLocation()));
         }
 
         @Override
@@ -138,7 +157,7 @@ abstract class FeatureOrigin {
 
         @Override
         TestSource nodeSource(Node node) {
-            return ClasspathResourceSource.from(source.getClasspathResourceName(), createFilePosition(node.getLocation()));
+            return from(source.getClasspathResourceName(), createFilePosition(node.getLocation()));
         }
 
         @Override
@@ -147,4 +166,29 @@ abstract class FeatureOrigin {
         }
     }
 
+    private static class CompositeFeatureOrigin extends FeatureOrigin {
+
+        private final FeatureOrigin featureOrigin;
+        private final FeatureOrigin pathOrigin;
+
+        private CompositeFeatureOrigin(FeatureOrigin featureOrigin, FeatureOrigin pathOrigin) {
+            this.featureOrigin = featureOrigin;
+            this.pathOrigin = pathOrigin;
+        }
+
+        @Override
+        TestSource featureSource() {
+            return from(asList(featureOrigin.featureSource(), pathOrigin.featureSource()));
+        }
+
+        @Override
+        TestSource nodeSource(Node scenarioDefinition) {
+            return from(asList(featureOrigin.nodeSource(scenarioDefinition), pathOrigin.nodeSource(scenarioDefinition)));
+        }
+
+        @Override
+        UniqueId featureSegment(UniqueId parent, CucumberFeature feature) {
+            return featureOrigin.featureSegment(parent, feature);
+        }
+    }
 }

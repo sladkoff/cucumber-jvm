@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -85,6 +86,11 @@ class FeatureBuilderTest {
             @Override
             public URI getUri() {
                 return featurePath;
+            }
+
+            @Override
+            public Path getPath() {
+                return null;
             }
 
             @Override

@@ -7,6 +7,7 @@ import org.junit.platform.engine.TestTag;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
 import org.junit.platform.engine.support.hierarchical.Node;
 
 import java.util.Optional;
@@ -43,8 +44,13 @@ class PickleDescriptor extends AbstractTestDescriptor implements Node<CucumberEn
 
     Optional<String> getPackage() {
         return getSource()
-            .filter(ClasspathResourceSource.class::isInstance)
-            .map(ClasspathResourceSource.class::cast)
+            .filter(CompositeTestSource.class::isInstance)
+            .map(CompositeTestSource.class::cast)
+            .flatMap(compositeTestSource -> compositeTestSource.getSources()
+                .stream()
+                .filter(ClasspathResourceSource.class::isInstance)
+                .findFirst()
+            ).map(ClasspathResourceSource.class::cast)
             .map(ClasspathResourceSource::getClasspathResourceName)
             .map(ClasspathSupport::packageNameOfResource);
     }

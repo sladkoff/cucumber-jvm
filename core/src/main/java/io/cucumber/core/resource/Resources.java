@@ -59,6 +59,11 @@ class Resources {
         }
 
         @Override
+        public Path getPath() {
+            return resource;
+        }
+
+        @Override
         public InputStream getInputStream() throws IOException {
             return Files.newInputStream(resource);
         }
@@ -74,6 +79,11 @@ class Resources {
         @Override
         public URI getUri() {
             return resource.toUri();
+        }
+
+        @Override
+        public Path getPath() {
+            return resource;
         }
 
         @Override
@@ -96,6 +106,11 @@ class Resources {
         @Override
         public URI getUri() {
             return uri;
+        }
+
+        @Override
+        public Path getPath() {
+            return resource;
         }
 
         @Override

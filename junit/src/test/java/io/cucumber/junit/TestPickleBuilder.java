@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 
 class TestPickleBuilder {
@@ -29,6 +30,11 @@ class TestPickleBuilder {
             @Override
             public URI getUri() {
                 return path;
+            }
+
+            @Override
+            public Path getPath() {
+                return null;
             }
 
             @Override

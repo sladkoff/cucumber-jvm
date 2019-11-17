@@ -4,6 +4,7 @@ import gherkin.ast.Examples;
 import gherkin.ast.Feature;
 import gherkin.ast.Scenario;
 import gherkin.ast.ScenarioOutline;
+import gherkin.ast.TableCell;
 import gherkin.ast.TableRow;
 import io.cucumber.core.feature.CucumberFeature;
 import org.junit.platform.engine.TestDescriptor;
@@ -24,7 +25,7 @@ class FeatureDescriptor extends AbstractTestDescriptor implements Node<CucumberE
     }
 
     static TestDescriptor create(CucumberFeature cucumberFeature, TestDescriptor parent) {
-        FeatureOrigin source = FeatureOrigin.fromUri(cucumberFeature.getUri());
+        FeatureOrigin source = FeatureOrigin.create(cucumberFeature);
         Feature feature = cucumberFeature.getGherkinFeature();
         TestDescriptor descriptor = new FeatureDescriptor(
             source.featureSegment(parent.getUniqueId(), cucumberFeature),
@@ -55,12 +56,13 @@ class FeatureDescriptor extends AbstractTestDescriptor implements Node<CucumberE
 
         if (node instanceof TableRow) {
             TableRow tableRow = (TableRow) node;
-            feature.getPickleAt(tableRow.getLocation().getLine())
+            TableCell firstCell = tableRow.getCells().get(0);
+            feature.getPickleAt(firstCell.getLocation().getLine())
                 .ifPresent(pickle -> {
                     PickleDescriptor descriptor = new PickleDescriptor(
-                        source.exampleSegment(parent.getUniqueId(), tableRow),
+                        source.exampleSegment(parent.getUniqueId(), firstCell),
                         "Example #" + row,
-                        source.nodeSource(tableRow),
+                        source.nodeSource(firstCell),
                         pickle
                     );
                     parent.addChild(descriptor);

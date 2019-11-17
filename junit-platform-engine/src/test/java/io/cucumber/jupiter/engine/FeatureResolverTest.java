@@ -6,19 +6,24 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.ConfigurationParameters;
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.TestTag;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import static io.cucumber.core.resource.ClasspathSupport.CLASSPATH_SCHEME_PREFIX;
 import static io.cucumber.jupiter.engine.FeatureResolver.createFeatureResolver;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
-import static java.util.Optional.of;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsIterableContaining.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.TestDescriptor.Type.CONTAINER;
 import static org.junit.platform.engine.TestDescriptor.Type.TEST;
@@ -49,7 +54,7 @@ class FeatureResolverTest {
         TestDescriptor feature = getFeature();
         assertEquals("A feature with scenario outlines", feature.getDisplayName());
         assertEquals(emptySet(), feature.getTags());
-        assertEquals(of(from(featurePath)), feature.getSource());
+        assertThat(getSource(feature), hasItems(from(featurePath, from(2, 1))));
         assertEquals(CONTAINER, feature.getType());
         assertEquals(
             id.append("feature", featureSegmentValue),
@@ -65,7 +70,8 @@ class FeatureResolverTest {
             asSet(create("@FeatureTag"), create("@ScenarioTag")),
             scenario.getTags()
         );
-        assertEquals(of(from(featurePath, from(5, 3))), scenario.getSource());
+        assertThat(getSource(scenario), hasItems(from(featurePath, from(5, 3))));
+
         assertEquals(TEST, scenario.getType());
         assertEquals(
             id.append("feature", featureSegmentValue)
@@ -77,6 +83,13 @@ class FeatureResolverTest {
         assertEquals(Optional.of("io.cucumber.jupiter.engine"), pickleDescriptor.getPackage());
     }
 
+    private List<TestSource> getSource(TestDescriptor scenario) {
+        return scenario.getSource()
+            .map(CompositeTestSource.class::cast)
+            .map(CompositeTestSource::getSources)
+            .orElse(emptyList());
+    }
+
     @Test
     void outline() {
         TestDescriptor outline = getOutline();
@@ -85,7 +98,7 @@ class FeatureResolverTest {
             emptySet(),
             outline.getTags()
         );
-        assertEquals(of(from(featurePath, from(11, 3))), outline.getSource());
+        assertThat(getSource(outline), hasItems(from(featurePath, from(11, 3))));
         assertEquals(CONTAINER, outline.getType());
         assertEquals(
             id.append("feature", featureSegmentValue)
@@ -102,7 +115,7 @@ class FeatureResolverTest {
             asSet(create("@FeatureTag"), create("@Example1Tag"), create("@ScenarioOutlineTag")),
             example.getTags()
         );
-        assertEquals(of(from(featurePath, from(19, 7))), example.getSource());
+        assertThat(getSource(example), hasItems(from(featurePath, from(19, 9))));
         assertEquals(TEST, example.getType());
 
         assertEquals(

@@ -17,16 +17,16 @@ import static org.junit.platform.engine.Filter.composeFilters;
 
 class DiscoverySelectorResolver {
 
-    static ClassFilter buildPackageFilter(EngineDiscoveryRequest request) {
-        Filter<String> packageFilter = composeFilters(request.getFiltersByType(PackageNameFilter.class));
-        return ClassFilter.of(packageFilter.toPredicate(), aClass -> true);
-    }
-
     void resolveSelectors(EngineDiscoveryRequest request, TestDescriptor engineDescriptor) {
         ClassFilter packageFilter = buildPackageFilter(request);
         resolve(request, engineDescriptor, packageFilter);
         filter(engineDescriptor, packageFilter);
         pruneTree(engineDescriptor);
+    }
+
+    private ClassFilter buildPackageFilter(EngineDiscoveryRequest request) {
+        Filter<String> packageFilter = composeFilters(request.getFiltersByType(PackageNameFilter.class));
+        return ClassFilter.of(packageFilter.toPredicate(), aClass -> true);
     }
 
     private void resolve(EngineDiscoveryRequest request, TestDescriptor engineDescriptor, ClassFilter packageFilter) {
@@ -42,13 +42,9 @@ class DiscoverySelectorResolver {
     }
 
     private void filter(TestDescriptor engineDescriptor, ClassFilter packageFilter) {
-        applyPackagePredicate(packageFilter, engineDescriptor);
-    }
-
-    private void applyPackagePredicate(ClassFilter packagePredicate, TestDescriptor engineDescriptor) {
         engineDescriptor.accept(descriptor -> {
             if (descriptor instanceof PickleDescriptor
-                && !includePickle((PickleDescriptor) descriptor, packagePredicate)) {
+                && !includePickle((PickleDescriptor) descriptor, packageFilter)) {
                 descriptor.removeFromHierarchy();
             }
         });
